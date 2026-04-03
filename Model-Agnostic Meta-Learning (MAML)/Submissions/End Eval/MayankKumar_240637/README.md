@@ -1,1 +1,50 @@
+# Meta-Learning for Wireless Systems: Channel Estimation
+
+Part 1 — What did you build?
+I built a neural network that leverages Model-Agnostic Meta-Learning (MAML) for the task of wireless Channel Estimation. Instead of training from scratch, the model is meta-trained across varying wireless environments so it can rapidly adapt to new, unseen environments (predicting the true channel from pilot signals) using only a few labeled examples.
+
+
+
+Part 2 — How to set it up
+To set up this project locally, run the following commands:
+
+```bash
+git clone [https://github.com/your-username/your-repo.git](https://github.com/your-username/your-repo.git)
+cd your-repo/end_term
+pip install -r requirements.txt
+```
+
+
+Part 3 — How to generate data
+
+```bash
+python generate_data.py
+```
+This script generates synthetic wireless channel estimation tasks using NumPy. It creates 100 training tasks and 20 testing tasks by randomly varying the Signal-to-Noise Ratio (SNR) and the number of multipath components. The formatted support and query sets are saved locally into a single wireless_dataset.npz file.
+
+
+Part 4 — How to train
+```bash
+python train.py
+```
+This script runs the MAML meta-training loop for 500 iterations. It uses a meta-batch size of 4, an inner learning rate of 0.01, and 5 adaptation shots (inner steps). It also trains a baseline model from scratch for 200 steps on the test tasks. The trained MAML weights are saved to meta_model.pth.
+
+
+Part 5 — How to test
+```bash
+python test.py
+```
+This script evaluates the trained MAML model against the baseline on the 20 unseen test tasks. It prints the average 5-shot and 20-shot mean squared error (converted to dB) to the console, and generates a visual comparison curve saved as results/plot_comparison.png.
+
+
+Part 6 — Your resultsThe table below compares the performance of the MAML model against a basic model trained from scratch on unseen test tasks. (Note: Lower dB indicates better performance/lower error).
+
+
+| Method                 | 5-shot Error | 20-shot Error |
+|------------------------|--------------|---------------|
+| Basic model (scratch)  | -12.44 dB    | -16.88 dB     |
+| Your MAML model        | -14.38 dB    | -15.84 dB     |
+
+
+As shown by the 5-shot error, the MAML model adapts significantly faster to new wireless environments with very limited data compared to a network initialized from random weights.
 
