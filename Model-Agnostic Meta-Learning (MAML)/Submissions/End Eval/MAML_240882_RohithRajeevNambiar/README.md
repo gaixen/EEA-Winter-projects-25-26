@@ -60,7 +60,6 @@ This script:
 
 It also:
 
-* Trains a baseline model (from scratch per task)
 * Saves the trained model to `model.pth`
 * Saves training loss plot to `results/plot_loss.png`
 
