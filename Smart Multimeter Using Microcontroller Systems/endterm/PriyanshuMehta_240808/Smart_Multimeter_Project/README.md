@@ -66,7 +66,7 @@ The table below shows the comparison between:
 | Method                | R Error | C Error | L Error |
 | --------------------- | ------- | ------- | ------- |
 | Fixed-range (no auto) | 2.36%   | 8.19%   | 9.07%   |
-| Auto-ranging          | 0.%   | 0.30%   | 0.46%   |
+| Auto-ranging          | 0.38%   | 0.30%   | 0.46%   |
 
 ### Explanation:
 
