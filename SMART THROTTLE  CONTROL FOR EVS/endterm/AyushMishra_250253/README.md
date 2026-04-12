@@ -19,6 +19,8 @@ Run the following MATLAB scripts in order:
 
 All plots are automatically saved in the `results/` folder.
 
+The Simulink model (`throttle_model.slx`) can be opened directly to visualize the closed-loop and gain-scheduled control system.
+
 ---
 
 ## Plant Model
@@ -27,7 +29,7 @@ The motor is modeled as a first-order system:
 
 G(s) = 1 / (0.5s + 1)
 
-Parameters:
+### Parameters:
 - Gain K = 1  
 - Time constant τ = 0.5 seconds  
 
@@ -63,7 +65,9 @@ Final tuned gains:
 
 ## Gain Scheduling
 
-The throttle range is divided into three zones:
+To improve performance across varying throttle levels, gain scheduling is implemented.
+
+### Throttle Zones:
 
 - Zone 1 (0–30%) → smooth response  
 - Zone 2 (30–70%) → balanced response  
@@ -82,7 +86,7 @@ The throttle range is divided into three zones:
 - 5–10 s → 50%  
 - 10–15 s → 85%  
 
-The controller dynamically switches gains based on throttle input while maintaining smooth system behavior.
+The controller dynamically switches gains based on throttle input while maintaining continuous system behavior.
 
 ---
 
@@ -118,6 +122,22 @@ The system adapts to throttle changes, providing smooth control at low speeds an
 
 ---
 
+## Simulink Model
+
+The Simulink model implements the closed-loop control system with gain scheduling.
+
+### Key Components:
+- Step input (throttle)
+- Sum block (error calculation)
+- PID Controller with external gains
+- MATLAB Function block (gain scheduler)
+- Transfer Function (motor model)
+- Scope (output visualization)
+
+The model demonstrates real-time adaptation of PID gains based on throttle input.
+
+---
+
 ## Bonus Insight
 
 Effect of PID parameter variation:
@@ -127,13 +147,13 @@ Effect of PID parameter variation:
 - High Kd → reduces overshoot but increases noise sensitivity  
 
 Example:
-Increasing Kp excessively led to oscillations and overshoot greater than 20%.
+Excessively high Kp caused oscillations and overshoot greater than 20%.
 
 ---
 
 ## Conclusion
 
-The project demonstrates that PID control significantly improves system performance over open-loop operation. Gain scheduling further enhances adaptability across different operating conditions, making the system more suitable for real-world EV throttle control.
+The project demonstrates that PID control significantly improves system performance over open-loop operation. Gain scheduling further enhances adaptability across different operating conditions, making the system suitable for real-world EV throttle control applications.
 
 ---
 
