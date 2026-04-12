@@ -9,8 +9,8 @@ Once the path was found, I generated two versions of the trajectory — one that
 ## Part 2 — Setup
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo/end_term
+git clone https://github.com/<your-username>/Winter-projects-25-26.git
+cd Winter-projects-25-26/Formation-Based\ UAV\ Path\ Planning/End-Eval/ArshChauhan_240196
 pip install -r requirements.txt
 ```
 
