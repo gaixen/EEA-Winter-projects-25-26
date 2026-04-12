@@ -5,15 +5,18 @@ A Python simulation of **7 UAVs** flying in a **'T' formation** from start `(5, 
 
 ## Part 2 — Setup
 
+```text
 ```bash
 git clone [https://github.com/your-username/your-repo.git](https://github.com/your-username/your-repo.git)
 cd your-repo/end_term
 pip install -r requirements.txt
+```
 
 ## Part 3 — How to run
 
-Bash
+```bash
 python simulate.py
+```
 
 Running this script will:
 
@@ -64,7 +67,7 @@ The energy proxy (∑ a² Δt) is significantly smaller for min-energy, confirmi
 
 ## Part 6 — Formation details
 
-Item | Value |
+| Item | Value |
 | :--- | :--- |
 | Formation shape | 'T' |
 | Number of UAVs (N) | 7 |
