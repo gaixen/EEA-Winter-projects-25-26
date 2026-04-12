@@ -2,14 +2,14 @@
 
 Electrical Engineering Association Winter Project
 Simulation and Design
+
 ---
 
 ## Brief Overview of the Project
 
 This project simulates an industry-grade digital multimeter capable of measuring Resistance (primary focus), Capacitance, and Inductance across a 10^5 dynamic range.  
 The auto-ranging engine automatically selects the correct measurement scale by monitoring each reading against 10% and 90% thresholds, with a 3-sample hysteresis rule to prevent oscillation near range boundaries.  
-The simulation achieves an average measurement accuracy of approximately 98% or better (under 2% error) across all
-three modes using a Gaussian noise model with σ = 0.5% of the true value.
+The simulation achieves an average measurement accuracy of approximately 98% or better (under 2% error) across all three modes using a Gaussian noise model with σ = 0.5% of the true value.
 
 ---
 
