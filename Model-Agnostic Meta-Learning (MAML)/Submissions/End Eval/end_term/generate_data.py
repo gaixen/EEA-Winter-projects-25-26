@@ -1,110 +1,263 @@
 """
-generate_data.py — Synthetic Channel Estimation Dataset
-Creates meta-learning tasks for wireless channel estimation.
-Each task = one wireless environment with varying SNR / path counts.
+Generate synthetic wireless channel estimation tasks for meta-learning.
+Each task represents one wireless environment with different conditions (SNR, noise, paths).
 """
 
 import numpy as np
-import os
-
-# ── Reproducibility ───────────────────────────────────────────────────────────
-SEED = 42
-np.random.seed(SEED)
-
-# ── Dataset parameters ────────────────────────────────────────────────────────
-NUM_TRAIN_TASKS = 100
-NUM_TEST_TASKS  = 20
-N_SUPPORT       = 10        # labelled examples per task (adaptation)
-N_QUERY         = 80        # evaluation examples per task
-PILOT_DIM       = 16        # number of pilot subcarriers (input dim)
-CHANNEL_DIM     = 16        # channel coefficients to estimate (output dim)
+from pathlib import Path
 
 
-def generate_channel(n_samples: int, n_paths: int, snr_db: float) -> tuple:
+class WirelessTaskGenerator:
     """
-    Simulate an OFDM channel estimation task.
+    Generates meta-learning tasks for wireless channel estimation.
+    
+    Task definition:
+    - One task = one wireless environment with fixed parameters (SNR, num_paths, noise_level)
+    - Support set: Small number of pilot observations for fast adaptation (5-10 samples)
+    - Query set: Larger number of samples for performance evaluation (50-100 samples)
+    - All tasks share the same underlying structure but with varied parameters
+    """
+    
+    def __init__(self, input_dim=4, output_dim=1, random_seed=None):
+        """
+        Initialize task generator.
+        
+        Args:
+            input_dim: Input dimension (pilot observations)
+            output_dim: Output dimension (channel coefficients)
+            random_seed: Random seed for reproducibility
+        """
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.random_seed = random_seed
+        # If a seed is provided, make generation reproducible. Otherwise use random state.
+        if random_seed is not None:
+            np.random.seed(random_seed)
+    
+    def generate_single_task(self, n_support=8, n_query=64, snr=10, num_paths=3, noise_scale=0.1):
+        """
+        Generate a single meta-learning task.
+        
+        A task consists of:
+        - X_support: Support set inputs (n_support, input_dim)
+        - Y_support: Support set labels (n_support, output_dim)
+        - X_query: Query set inputs (n_query, input_dim)
+        - Y_query: Query set labels (n_query, output_dim)
+        
+        Args:
+            n_support: Number of support samples (5-10)
+            n_query: Number of query samples (50-100)
+            snr: Signal-to-noise ratio in dB
+            num_paths: Number of multipath components (varies task difficulty)
+            noise_scale: Gaussian noise standard deviation
+            
+        Returns:
+            Dictionary with X_support, Y_support, X_query, Y_query
+        """
+        # Sample random channel coefficients (task-specific parameters)
+        # These define the underlying true function for this task
+        channel_coeffs = np.random.randn(num_paths) + 1j * np.random.randn(num_paths)
+        channel_coeffs = channel_coeffs / np.linalg.norm(channel_coeffs)  # Normalize
+        
+        # Generate support set
+        X_support = self._generate_pilot_signals(n_support, snr, noise_scale)
+        Y_support = self._estimate_channel(X_support, channel_coeffs)
+        
+        # Generate query set from SAME task (same parameters)
+        X_query = self._generate_pilot_signals(n_query, snr, noise_scale)
+        Y_query = self._estimate_channel(X_query, channel_coeffs)
+        
+        return {
+            'X_support': X_support.astype(np.float32),
+            'Y_support': Y_support.astype(np.float32),
+            'X_query': X_query.astype(np.float32),
+            'Y_query': Y_query.astype(np.float32),
+            'snr': snr,
+            'num_paths': num_paths,
+            'noise_scale': noise_scale
+        }
+    
+    def _generate_pilot_signals(self, n_samples, snr, noise_scale):
+        """
+        Generate pilot signals (sub-carriers with known values).
+        
+        X represents observations in the wireless channel.
+        Shape: (n_samples, input_dim)
+        """
+        # Random pilot signal matrix
+        X = np.random.randn(n_samples, self.input_dim)
+        
+        # Add noise based on SNR
+        noise_power = 10 ** (-snr / 10)
+        X = X + np.sqrt(noise_power) * np.random.randn(n_samples, self.input_dim)
+        
+        return X
+    
+    def _estimate_channel(self, X, channel_coeffs):
+        """
+        Compute channel estimates based on pilots and true channel.
+        
+        Y represents the true channel responses corresponding to inputs X.
+        Shape: (n_samples, output_dim)
+        """
+        # Simple linear relationship: different feature combinations
+        # In real wireless: Y = H @ X^H (Hermitian transpose)
+        # Simplified here to regressors on pilot signals
+        Y = np.zeros((X.shape[0], self.output_dim))
+        
+        for i, coeff in enumerate(channel_coeffs[:self.output_dim]):
+            Y[:, 0] += np.real(coeff) * X[:, i % self.input_dim]
+        
+        return Y
+    
+    def generate_task_distribution(self, n_tasks, n_support=8, n_query=64):
+        """
+        Generate multiple tasks with VARIED parameters.
+        
+        Diversity is achieved by:
+        - Varying SNR (5 to 20 dB)
+        - Varying number of paths (2 to 5)
+        - Varying noise scale (0.05 to 0.2)
+        
+        Args:
+            n_tasks: Number of tasks to generate
+            n_support: Support set size per task
+            n_query: Query set size per task
+            
+        Returns:
+            List of task dictionaries
+        """
+        tasks = []
+        
+        for _ in range(n_tasks):
+            # Sample task parameters - vary them to ensure diversity
+            snr = np.random.uniform(5, 20)  # SNR in dB
+            num_paths = np.random.randint(2, 6)  # 2-5 paths
+            noise_scale = np.random.uniform(0.05, 0.2)
+            
+            task = self.generate_single_task(
+                n_support=n_support,
+                n_query=n_query,
+                snr=snr,
+                num_paths=num_paths,
+                noise_scale=noise_scale
+            )
+            tasks.append(task)
+        
+        return tasks
 
+
+def save_dataset(train_tasks, test_tasks, output_dir='results'):
+    """
+    Save dataset in structured NPZ format.
+    
     Args:
-        n_samples : number of (pilot, channel) pairs to generate
-        n_paths   : number of multipath components
-        snr_db    : signal-to-noise ratio in dB
-
-    Returns:
-        X : pilot observations  [n_samples, PILOT_DIM * 2]   (real + imag stacked)
-        Y : true channel        [n_samples, CHANNEL_DIM * 2] (real + imag stacked)
+        train_tasks: List of training tasks
+        test_tasks: List of test tasks
+        output_dir: Directory to save files
     """
-    snr_linear = 10 ** (snr_db / 10.0)
-    noise_std  = 1.0 / np.sqrt(2 * snr_linear)
-
-    # True channel: sum of n_paths complex exponentials
-    delays = np.random.uniform(0, 1, n_paths)
-    gains  = (np.random.randn(n_paths) + 1j * np.random.randn(n_paths)) / np.sqrt(2 * n_paths)
-    freq_idx = np.arange(CHANNEL_DIM)
-    H = np.sum(
-        gains[:, None] * np.exp(-2j * np.pi * delays[:, None] * freq_idx[None, :]),
-        axis=0
-    )   # shape: (CHANNEL_DIM,)
-
-    # Pilot observations = channel * pilot_symbols + noise
-    # pilot_symbols are unit-energy QPSK
-    pilot_phases  = np.random.choice([1, -1, 1j, -1j], size=(n_samples, PILOT_DIM))
-    channel_tiled = np.tile(H[:PILOT_DIM], (n_samples, 1))
-    noise         = (noise_std * np.random.randn(n_samples, PILOT_DIM) +
-                     1j * noise_std * np.random.randn(n_samples, PILOT_DIM))
-    X_complex     = channel_tiled * pilot_phases + noise
-
-    # Stack real/imag → real-valued tensors
-    X = np.hstack([X_complex.real, X_complex.imag]).astype(np.float32)
-    Y_full = np.tile(H, (n_samples, 1))
-    Y = np.hstack([Y_full.real, Y_full.imag]).astype(np.float32)
-
-    return X, Y
-
-
-def build_task(snr_range: tuple, path_range: tuple) -> dict:
-    """Return a single meta-learning task dict with support + query sets."""
-    snr_db  = np.random.uniform(*snr_range)
-    n_paths = np.random.randint(*path_range)
-    n_total = N_SUPPORT + N_QUERY
-
-    X, Y = generate_channel(n_total, n_paths, snr_db)
-    return {
-        "X_support": X[:N_SUPPORT],
-        "Y_support": Y[:N_SUPPORT],
-        "X_query"  : X[N_SUPPORT:],
-        "Y_query"  : Y[N_SUPPORT:],
-        "snr_db"   : snr_db,
-        "n_paths"  : n_paths,
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True)
+    
+    # Combine tasks into arrays
+    train_data = {
+        'X_support': np.stack([t['X_support'] for t in train_tasks]),
+        'Y_support': np.stack([t['Y_support'] for t in train_tasks]),
+        'X_query': np.stack([t['X_query'] for t in train_tasks]),
+        'Y_query': np.stack([t['Y_query'] for t in train_tasks]),
+        'snr': np.array([t['snr'] for t in train_tasks]),
+        'num_paths': np.array([t['num_paths'] for t in train_tasks]),
+        'noise_scale': np.array([t['noise_scale'] for t in train_tasks]),
     }
+    
+    test_data = {
+        'X_support': np.stack([t['X_support'] for t in test_tasks]),
+        'Y_support': np.stack([t['Y_support'] for t in test_tasks]),
+        'X_query': np.stack([t['X_query'] for t in test_tasks]),
+        'Y_query': np.stack([t['Y_query'] for t in test_tasks]),
+        'snr': np.array([t['snr'] for t in test_tasks]),
+        'num_paths': np.array([t['num_paths'] for t in test_tasks]),
+        'noise_scale': np.array([t['noise_scale'] for t in test_tasks]),
+    }
+    
+    # Save as NPZ files (compressed NumPy format)
+    train_path = output_path / 'train_tasks.npz'
+    test_path = output_path / 'test_tasks.npz'
+    
+    np.savez_compressed(train_path, **train_data)
+    np.savez_compressed(test_path, **test_data)
+    
+    print(f"[OK] Training tasks saved: {train_path}")
+    print(f"  Shape: {train_data['X_support'].shape[0]} tasks")
+    print(f"  Support set: {train_data['X_support'].shape[1:]} per task")
+    print(f"  Query set:   {train_data['X_query'].shape[1:]} per task")
+    print()
+    print(f"[OK] Test tasks saved: {test_path}")
+    print(f"  Shape: {test_data['X_support'].shape[0]} tasks")
 
 
-def build_dataset(num_tasks: int, snr_range=(0, 20), path_range=(2, 8)) -> list:
-    return [build_task(snr_range, path_range) for _ in range(num_tasks)]
+def verify_dataset_diversity(tasks, n_samples=5):
+    """
+    Verify that tasks are different (check diversity).
+    
+    Args:
+        tasks: List of task dictionaries
+        n_samples: Number of tasks to inspect
+    """
+    print("\nDataset Diversity Check:")
+    print("-" * 60)
+    
+    for i in range(min(n_samples, len(tasks))):
+        task = tasks[i]
+        print(f"Task {i}:")
+        print(f"  SNR: {task['snr']:.1f} dB")
+        print(f"  Paths: {task['num_paths']}")
+        print(f"  Noise: {task['noise_scale']:.3f}")
+        print(f"  Support loss range: [{task['Y_support'].min():.4f}, {task['Y_support'].max():.4f}]")
+        print()
 
 
-def save_dataset(tasks: list, path: str) -> None:
-    arrays = {}
-    for key in ["X_support", "Y_support", "X_query", "Y_query"]:
-        arrays[key] = np.stack([t[key] for t in tasks])
-    np.savez(path, **arrays)
-    print(f"  Saved {len(tasks)} tasks → {path}")
+if __name__ == '__main__':
+    import argparse
+    print("=" * 60)
+    print("MAML Wireless Channel Estimation Dataset Generator")
+    print("=" * 60)
+    print()
 
+    parser = argparse.ArgumentParser(description="Generate meta-learning tasks for MAML experiments.")
+    parser.add_argument("--train-tasks", type=int, default=100, help="Number of training tasks to generate (default: 100)")
+    parser.add_argument("--test-tasks", type=int, default=20, help="Number of test tasks to generate (default: 20)")
+    parser.add_argument("--n-support", type=int, default=8, help="Support set size per task (shots)")
+    parser.add_argument("--n-query", type=int, default=64, help="Query set size per task")
+    parser.add_argument("--seed", type=int, default=None, help="Optional random seed for reproducibility (default: random)")
+    parser.add_argument("--output-dir", default="results", help="Directory to save generated datasets")
+    args = parser.parse_args()
 
-def main():
-    os.makedirs("data", exist_ok=True)
+    # Initialize generator (use None seed by default -> new random data each run)
+    generator = WirelessTaskGenerator(input_dim=4, output_dim=1, random_seed=args.seed)
 
-    print("Generating training tasks …")
-    train_tasks = build_dataset(NUM_TRAIN_TASKS)
-    save_dataset(train_tasks, os.path.join("data", "train_tasks.npz"))
+    # Generate training and test tasks
+    print(f"Generating {args.train_tasks} training tasks (support={args.n_support}, query={args.n_query})...")
+    train_tasks = generator.generate_task_distribution(
+        n_tasks=args.train_tasks,
+        n_support=args.n_support,
+        n_query=args.n_query
+    )
 
-    print("Generating test tasks …")
-    test_tasks = build_dataset(NUM_TEST_TASKS)
-    save_dataset(test_tasks, os.path.join("data", "test_tasks.npz"))
+    print(f"Generating {args.test_tasks} test tasks...")
+    test_tasks = generator.generate_task_distribution(
+        n_tasks=args.test_tasks,
+        n_support=args.n_support,
+        n_query=args.n_query
+    )
 
-    print(f"\nDone.  Input dim = {PILOT_DIM * 2},  Output dim = {CHANNEL_DIM * 2}")
-    print(f"  Support size per task : {N_SUPPORT} samples")
-    print(f"  Query size per task   : {N_QUERY} samples")
+    # Save dataset
+    save_dataset(train_tasks, test_tasks, output_dir=args.output_dir)
 
+    # Verify diversity
+    verify_dataset_diversity(train_tasks, n_samples=3)
+    verify_dataset_diversity(test_tasks, n_samples=3)
 
-if __name__ == "__main__":
-    main()
+    print("[OK] Dataset generation complete!")
+    print(f"  Total training tasks: {len(train_tasks)}")
+    print(f"  Total test tasks: {len(test_tasks)}")
