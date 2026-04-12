@@ -16,8 +16,8 @@ three modes using a Gaussian noise model with σ = 0.5% of the true value.
 ## How to set it up
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo/end_term/smart_multimeter
+git clone https://github.com/advaithmukund24/Smart-Multimeter.git
+cd Smart-Multimeter
 pip install -r requirements.txt
 ```
 
