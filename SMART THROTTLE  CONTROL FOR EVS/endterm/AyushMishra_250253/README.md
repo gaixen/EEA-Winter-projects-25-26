@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-This project models and controls a throttle-driven electric vehicle motor using MATLAB and Simulink. A first-order motor model is developed, followed by the design and tuning of a PID controller. The controller is further extended into a gain-scheduled controller that adapts across different throttle zones.
+This project models and controls a throttle-driven electric vehicle motor using MATLAB and Simulink. A first-order motor model is developed, followed by PID controller design and tuning. The controller is further enhanced using gain scheduling to adapt across different throttle zones.
 
 The results demonstrate improved speed, stability, and adaptability compared to open-loop and fixed PID control.
 
@@ -10,16 +10,18 @@ The results demonstrate improved speed, stability, and adaptability compared to 
 
 ## How to Run
 
-Run the following MATLAB scripts in order:
+Click any file below to open and run it directly:
 
-1. plant_model.m  
-2. pid_design.m  
-3. gain_scheduled.m  
-4. compare_results.m  
+- [plant_model.m](plant_model.m) — Open-loop response  
+- [pid_design.m](pid_design.m) — PID tuning and performance  
+- [gain_scheduled.m](gain_scheduled.m) — Gain scheduling implementation  
+- [compare_results.m](compare_results.m) — Final comparison plot  
 
-All plots are automatically saved in the `results/` folder.
+Simulink model:
 
-The Simulink model (`throttle_model.slx`) can be opened directly to visualize the closed-loop and gain-scheduled control system.
+- [throttle_model.slx](throttle_model.slx)
+
+All plots are saved automatically in the `results/` folder.
 
 ---
 
@@ -38,7 +40,7 @@ G(s) = 1 / (0.5s + 1)
 - Settling Time ≈ 2.0 s  
 - Overshoot = 0%  
 
-The system is stable but slow and requires control for faster response.
+The system is stable but slow.
 
 ---
 
@@ -57,21 +59,19 @@ Final tuned gains:
 - Steady-state error ≈ 0  
 
 ### Tuning Strategy:
-- Increased Kp to reduce rise time  
-- Added Ki to eliminate steady-state error  
-- Added Kd to reduce overshoot  
+- Increase Kp → faster response  
+- Add Ki → remove steady-state error  
+- Add Kd → reduce overshoot  
 
 ---
 
 ## Gain Scheduling
 
-To improve performance across varying throttle levels, gain scheduling is implemented.
+The throttle is divided into three zones:
 
-### Throttle Zones:
-
-- Zone 1 (0–30%) → smooth response  
-- Zone 2 (30–70%) → balanced response  
-- Zone 3 (70–100%) → aggressive response  
+- Zone 1 (0–30%) → smooth control  
+- Zone 2 (30–70%) → balanced control  
+- Zone 3 (70–100%) → aggressive control  
 
 ### Gains Used:
 
@@ -86,55 +86,53 @@ To improve performance across varying throttle levels, gain scheduling is implem
 - 5–10 s → 50%  
 - 10–15 s → 85%  
 
-The controller dynamically switches gains based on throttle input while maintaining continuous system behavior.
+The controller dynamically adjusts gains based on throttle input.
 
 ---
 
 ## Results and Observations
 
 ### Open Loop Response
-![Open Loop](results/open_loop_response.png)
+[View Image](results/open_loop_response.png)
 
-The system is slow and lacks responsiveness.
+![Open Loop](results/open_loop_response.png)
 
 ---
 
 ### PID Response
-![PID](results/pid_response.png)
+[View Image](results/pid_response.png)
 
-The PID controller significantly improves response speed and eliminates steady-state error with minimal overshoot.
+![PID](results/pid_response.png)
 
 ---
 
 ### Gain Scheduled Response
-![Gain Scheduled](results/gainscheduled_response.png)
+[View Image](results/gainscheduled_response.png)
 
-The system adapts to throttle changes, providing smooth control at low speeds and faster response at higher speeds.
+![Gain Scheduled](results/gainscheduled_response.png)
 
 ---
 
 ### Comparison Plot
-![Comparison](results/comparison_plot.png)
+[View Image](results/comparison_plot.png)
 
-- Open-loop is slow  
-- PID is fast and stable  
-- Gain scheduling provides the most adaptable performance  
+![Comparison](results/comparison_plot.png)
 
 ---
 
 ## Simulink Model
 
-The Simulink model implements the closed-loop control system with gain scheduling.
+The Simulink model implements a closed-loop control system with gain scheduling.
 
 ### Key Components:
 - Step input (throttle)
-- Sum block (error calculation)
-- PID Controller with external gains
+- Sum block (error computation)
+- PID Controller (external gains)
 - MATLAB Function block (gain scheduler)
 - Transfer Function (motor model)
-- Scope (output visualization)
+- Scope (output)
 
-The model demonstrates real-time adaptation of PID gains based on throttle input.
+The controller adapts dynamically in real-time based on throttle input.
 
 ---
 
@@ -144,7 +142,7 @@ Effect of PID parameter variation:
 
 - High Kp → faster response but increased overshoot  
 - High Ki → eliminates steady-state error but may cause instability  
-- High Kd → reduces overshoot but increases noise sensitivity  
+- High Kd → reduces overshoot but increases sensitivity to noise  
 
 Example:
 Excessively high Kp caused oscillations and overshoot greater than 20%.
@@ -153,7 +151,7 @@ Excessively high Kp caused oscillations and overshoot greater than 20%.
 
 ## Conclusion
 
-The project demonstrates that PID control significantly improves system performance over open-loop operation. Gain scheduling further enhances adaptability across different operating conditions, making the system suitable for real-world EV throttle control applications.
+PID control significantly improves system performance over open-loop behavior. Gain scheduling further enhances adaptability across operating conditions, making the system suitable for EV throttle control.
 
 ---
 
