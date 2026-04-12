@@ -6,8 +6,8 @@ Simulation and Design
 
 ## Brief Overview of the Project
 
-This project simulates an industry-grade digital multimeter capable of measuring Resistance (primary focus), Capacitance, and Inductance across a 10^5 dynamic range.
-The auto-ranging engine automatically selects the correct measurement scale by monitoring each reading against 10% and 90% thresholds, with a 3-sample hysteresis rule to prevent oscillation near range boundaries. 
+This project simulates an industry-grade digital multimeter capable of measuring Resistance (primary focus), Capacitance, and Inductance across a 10^5 dynamic range.  
+The auto-ranging engine automatically selects the correct measurement scale by monitoring each reading against 10% and 90% thresholds, with a 3-sample hysteresis rule to prevent oscillation near range boundaries.  
 The simulation achieves an average measurement accuracy of approximately 98% or better (under 2% error) across all
 three modes using a Gaussian noise model with σ = 0.5% of the true value.
 
@@ -33,10 +33,8 @@ python simulate.py
 ```
 
 The script runs 50 test values spread log-evenly across all 5 ranges for each measurement mode (R, C, L). 
-(Resistances are measured using the Voltage Divider Method, Capacitances are measured using the Time Constant Method and Inductnaces are measured using Resonant Frequency Method.)
-For every test value it adds Gaussian noise, passes
-the reading through the auto-ranging engine, and records the true value, measured value, active range, and percentage error. It then prints a summary table comparing auto-ranging accuracy against a fixed-range baseline, and saves two labelled plots
-to the results/ folder.
+(Resistances are measured using the Voltage Divider Method, Capacitances are measured using the Time Constant Method and Inductnaces are measured using Resonant Frequency Method.)  
+For every test value it adds Gaussian noise, passes the reading through the auto-ranging engine, and records the true value, measured value, active range, and percentage error. It then prints a summary table comparing auto-ranging accuracy against a fixed-range baseline, and saves two labelled plots to the results/ folder.
 
 ---
 
@@ -58,17 +56,12 @@ Range state plot: results/plot_autorange.png
 
 ## Known limitations
 
-In a real hardware implementation several additional error sources would need to be accounted for. 
---> ADC quantisation noise is modelled here as Gaussian but in
-practice it includes non-linearity and integral non-linearity errors that vary across the conversion range. 
---> Op-amp offset voltage in the signal conditioning stage would introduce a systematic DC bias not captured by the symmetric noise
-model used here. 
---> Probe and PCB trace resistance (typically 0.1–1 Ω) would add
-a fixed offset to low-range resistance measurements, making Range 1 less accurate than simulated. 
---> Temperature drift in the reference resistor and capacitor would
-cause the calibration constants R_REF and C_REF to shift over time, requiring periodic recalibration. 
---> Finally, the LC resonance method for inductance is sensitive to parasitic capacitance in the PCB layout, which would shift the
-measured resonant frequency and introduce a systematic error not present in the simulation.
+In a real hardware implementation several additional error sources would need to be accounted for.   
+--> ADC quantisation noise is modelled here as Gaussian but in practice it includes non-linearity and integral non-linearity errors that vary across the conversion range.  
+--> Op-amp offset voltage in the signal conditioning stage would introduce a systematic DC bias not captured by the symmetric noise model used here.  
+--> Probe and PCB trace resistance (typically 0.1–1 Ω) would add a fixed offset to low-range resistance measurements, making Range 1 less accurate than simulated.  
+--> Temperature drift in the reference resistor and capacitor would cause the calibration constants R_REF and C_REF to shift over time, requiring periodic recalibration.  
+--> Finally, the LC resonance method for inductance is sensitive to parasitic capacitance in the PCB layout, which would shift themeasured resonant frequency and introduce a systematic error not present in the simulation.  
 
 ---
 
