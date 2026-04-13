@@ -5,7 +5,7 @@ This project simulates a digital multimeter for measuring Resistance (R), Capaci
 ## How to set it up
 
 git clone https://github.com/lassanbum/Winter-projects-25-26.git
-cd your-repo/end_term/smart_multimeter
+cd Winter-projects-25-26/end_term/smart_multimeter
 pip install -r requirements.txt
 
 ## How to run the simulation
